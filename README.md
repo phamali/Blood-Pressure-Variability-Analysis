@@ -8,7 +8,7 @@
 ## Overview
 This study investigates how physiological traits and lifestyle habits collectively influence **systolic blood pressure variability (BPV)**. Using clinical and survey records from the **National Health and Nutrition Examination Survey (NHANES)** ($N = 10,000$ raw; $n = 2,925$ cleaned complete cases), we develop, transform, and validate a multilinear regression model to quantify key determinants of average systolic blood pressure (`BPSysAve`).
 
-📄 **[Full Technical Report (PDF)](./BP%20Variability%20Report.pdf)** | 📊 **[Research Poster (PDF)](./BP%20Variability%20Poster.pdf)**
+📄 **[Full Technical Report (PDF)](./BP%20Variability%20Report.pdf)** | 📊 **[Research Poster (PNG)](./BP%20Variability%20Poster.png)**
 
 ---
 
