@@ -65,9 +65,4 @@ blood-pressure-variability-analysis/
 ```
 
 ## Authors
-* **Alisha Pham**
-* **Katrina Sha**
-* **Dabin Choi**
-
-## Authors
 **Alisha Pham**, **Katrina Sha**, **Dabin Choi**
