@@ -3,18 +3,12 @@
 [![Language: R](https://img.shields.io/badge/Language-R-276DC3.svg?style=flat-square)](https://www.r-project.org/)
 [![Dataset: NHANES](https://img.shields.io/badge/Dataset-NHANES%20(n%3D2,925)-0052CC.svg?style=flat-square)](https://www.cdc.gov/nchs/nhanes/about_nhanes.htm)
 [![Report: PDF](https://img.shields.io/badge/Report-PDF-EC1C24.svg?style=flat-square)](./BP%20Variability%20Report.pdf)
-[![Poster: PNG](https://img.shields.io/badge/Poster-PNG-8A2BE2.svg?style=flat-square)](./BP%20Variability%20Poster.png)
+[![Poster: PDF](https://img.shields.io/badge/Poster-PDF-8A2BE2.svg?style=flat-square)](./BP%20Variability%20Poster.pdf)
 
 ## Overview
 This study investigates how physiological traits and lifestyle habits collectively influence **systolic blood pressure variability (BPV)**. Using clinical and survey records from the **National Health and Nutrition Examination Survey (NHANES)** ($N = 10,000$ raw; $n = 2,925$ cleaned complete cases), we develop, transform, and validate a multilinear regression model to quantify key determinants of average systolic blood pressure (`BPSysAve`).
 
-📄 **[Full Technical Report (PDF)](./BP%20Variability%20Report.pdf)** | 📊 **[Research Poster (PNG)](./BP%20Variability%20Poster.png)**
-
----
-
-## Research Poster
-
-![Research Poster](./BP%20Variability%20Poster.png)
+📄 **[Full Technical Report (PDF)](./BP%20Variability%20Report.pdf)** | 📊 **[Research Poster (PDF)](./BP%20Variability%20Poster.pdf)**
 
 ---
 
@@ -65,10 +59,15 @@ $$\widehat{\text{BPSysAve}^{-1}} = 8.728 \times 10^{-3} - 3.845 \times 10^{-4}\t
 ```text
 blood-pressure-variability-analysis/
 ├── BP Variability Report.pdf       # Full technical manuscript and diagnostic appendix
-├── BP Variability Poster.png       # Research poster summarizing pipeline and results
+├── BP Variability Poster.pdf       # Research poster summarizing pipeline and results
 ├── bp_variability_analysis.Rmd     # R Markdown source code for data cleaning and modeling
 └── README.md                       # Project documentation
 ```
+
+## Authors
+* **Alisha Pham**
+* **Katrina Sha**
+* **Dabin Choi**
 
 ## Authors
 **Alisha Pham**, **Katrina Sha**, **Dabin Choi**
