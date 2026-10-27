@@ -1,0 +1,480 @@
+---
+title: "Determinants of Blood Pressure Variability: A Multilinear Regression Approach"
+author: "Alisha Pham, Katrina Sha, Dabin Choi"
+output: pdf_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+#install.packages("NHANES")
+#install.packages("car")
+library(NHANES)
+library(car)
+data(NHANES)
+raw <- as.data.frame(NHANES)
+cleaned <- subset(raw, select = c(BPSysAve,Gender,Age,BMI,AlcoholYear,PhysActiveDays))
+cleaned <- cleaned[complete.cases(cleaned),]
+
+og_model <- lm(BPSysAve ~ Gender + Age + BMI + AlcoholYear + PhysActiveDays, data=cleaned)
+# try box-cox on response
+boxCox(og_model) # p close to -1, so do an inverse transformation on Y
+cleaned$invBPSysAve <- 1/cleaned$BPSysAve
+
+# try box-cox on predictors
+shifted_data <- cbind(cleaned[,3:4], cleaned$AlcoholYear + 1, cleaned$PhysActiveDays) # shift AlcoholYear to positive for box-cox transformation: all entries must be positive
+p <- powerTransform(shifted_data) # omitted Gender because it's categorical
+# summary(p)
+
+# transform predictors by the following power transformations:
+# Age: p = 0.4253758 
+cleaned$transAge <- sqrt(cleaned$Age)
+# BMI: p = -0.5791088
+cleaned$transBMI <- 1/sqrt(cleaned$BMI)
+# AlcoholYear: p = 0.1194823
+cleaned$transAlcoholYear <- log(cleaned$AlcoholYear + 1)
+# PhysActiveDays: p = 0.4983646 
+cleaned$transPhysActiveDays <- sqrt(cleaned$PhysActiveDays)
+# Gender: NONE
+
+# refit model
+trans_model_bc <- lm(invBPSysAve ~ Gender + transAge + transBMI + transAlcoholYear + transPhysActiveDays, data=cleaned)
+
+final <- lm(invBPSysAve ~ Gender + transAge + transBMI + transAlcoholYear, data = cleaned)
+```
+
+\newpage
+
+# Introduction
+
+High blood pressure (BP) is a global health crisis associated with life
+threatening conditions such as heart disease and stroke (Martinez-Ríos
+et al., 2021). BP is influenced by diverse interconnected factors,
+understanding them is essential for developing effective prevention
+strategies. This leads to our research question: **How do physiological
+and lifestyle factors influence systolic blood pressure variability
+(BPV)?** This study aims to build upon existing research by examining
+the combined effects of multiple physiological and lifestyle factors on
+BPV, extending our understanding on their collective influence.
+
+Past research offers informing insights for our direction of study on
+blood pressure. Martinez-Ríos et al. (2021) identified a strong positive
+correlation between systolic BP (SysBP), age and BMI, as well as a
+higher prevalence of hypertension in men compared to women. Jensen et
+al. (2024) observed a dose-response relationship between alcohol
+consumption and BP, with each additional drink per week increasing SysBP
+by 0.15-0.17 mmHg. Fagard and Cornelissen (2007) demonstrated that
+endurance training over 4-52 weeks significantly reduced SysBP by 3.3
+mmHg. These knowledge directly suggested the predictors of this study:
+**gender, age, BMI, alcohol drinking frequency, and exercise
+frequency.**
+
+Linear regression is suitable for our research, as it models BPV as a
+linear combination of the selected predictors. This allows us to
+quantify the contribution of each variable while simultaneously
+assessing their combined impact on the average outcome. By emphasizing
+interpretability, the model’s coefficients reveal both the strength and
+direction of these associations. This modeling approach will provide
+meaningful insights into how physiological and lifestyle factors
+individually and collectively influence BPV.
+
+# Methods
+
+BPSysAve was selected as the response variable because it directly
+measures blood pressure. The preliminary model included BPSysAve as the
+response and Gender, Age, BMI, AlcoholYear, and PhysActiveDays as
+predictors, where AlcoholYear represents annual drinking frequency and
+PhysActiveDays denotes weekly active days.
+
+We began with checking conditions and assumptions on the preliminary
+model.
+
+1.  Condition 1 & 2: We examined Condition 1 (condition mean response)
+    for random diagonal scatter or easily identifiable non-linear trends
+    in the Response vs. Fitted plot, and Condition 2 (conditional mean
+    predictors) for lack of non-linear patterns in pairwise predictor
+    scatterplots. If Condition 1 is violated, then linear regression is
+    not suitable for this research. If Condition 2 is violated, in the
+    subsequent diagnosis on model assumption, we should decide by cases
+    if an assumption is indeed violated.
+
+2.  Linearity: Residual plots were checked for systematic patterns, such
+    as curves or functions of predictors, suggesting non-linearity.
+    Box-Cox transformations were applied to address violations.
+
+3.  Constant Variance: Fanning patterns in residual plots indicated
+    heteroskedasticity, mitigated using variance-stabilizing
+    transformations.
+
+4.  Uncorrelated Errors: Residual plots showing large clusters of many
+    points, a pattern across time, or some sequencing information
+    suggested autocorrelation, though no corrective measures could be
+    pursued in this analysis.
+
+5.  Normality: Deviations from the diagonal in Q-Q plots indicated
+    non-normality, corrected using Box-Cox transformations as needed.
+
+To monitor multicollinearity, we calculated VIF values for the
+preliminary and intermediary models, flagging predictors with VIF \> 5.
+High VIF values suggested inflated coefficient variance, potentially
+leading to unreliable conclusions on the significance of the model.
+Multicollinearity could be addressed by either collecting more data to
+boost the sample variations or respecifying the model.
+
+With conditions and assumptions addressed, significance tests guided
+model refinement. After choosing a significance level, ANOVA assessed
+whether at least one predictor was significant, followed by T-tests to
+identify insignificant predictors, which were excluded to create reduced
+models. Partial F-tests confirmed whether reduced models retained
+explanatory power. The process aimed to refine a model where all
+predictors were significant; we would deploy that as our final model.
+
+We then used automated methods, including All Possible Subsets, Forward,
+Backward, and Stepwise Selection, which optimized adjusted $R^2$ and
+AIC. We hoped to reach some agreement between automated and manual
+selections to validate the final model.
+
+We identified leverage points, outliers, and influential data points in
+the final model to understand their impact. Leverage points were
+identified by their distance from the predictor center, and standardized
+residuals flagged outliers. Cook’s Distance, DFFITS, and DFBETAS
+quantified data points' influence on fitted values and coefficients,
+informing their impact on the model. Normally no action would be pursued
+for the problematic observations unless there was a specific context
+that required us to exclude them.
+
+Finally, we confirmed the final model met all assumptions, with minimal
+multicollinearity checked via VIF. This ensured confidence in making
+interpretations and answering the research question with the final
+model.
+
+# Results
+
+## Model Diagnostics
+
+The scatterplot of the Response vs. Fitted Values showed a random
+scatter around the diagonal, indicating no systematic patterns and
+Condition 1 was satisfied. However Condition 2 appeared violated, as the
+pairwise scatterplot between AlcoholYear and BMI revealed a parabolic
+relationship.
+
+```{r og conditions, fig.show='hold', fig.align='center', echo=FALSE, fig.cap="Response vs. Fitted plot (left) and pairwise predictor plot (right) for the preliminary model", out.height="20%"}
+y_value <- resid(og_model)
+x_value <- fitted(og_model)
+
+#Condition 1
+plot(x=x_value, y=cleaned$BPSysAve, xlab="Fitted", ylab="Response", main="Systolic Blood Pressure vs. Fitted")
+
+#Condition 2
+pairs(cleaned[,2:6])
+```
+
+There were violations for all model assumptions. Strong fanning and
+non-linear patterns on Residuals vs. BMI concerned the constant variance
+and linearity assumption. The stark deviation from the diagonal line on
+the Q-Q plot warned non-normality. Residuals vs. AlcoholYear showed
+serious issues with uncorrelated errors: Although AlcoholYear was a
+discrete predictor, the residual plot should still show random scatter
+among integers between 0 to 365, not systematic accumulations on certain
+values, which was shown here.
+
+There was minimal issue with multicollinearity: The VIF for each
+predictor was between 1.01-1.05.
+
+```{r og residuals, echo=FALSE, fig.show='hold', fig.align='center', fig.cap="Residuals vs. Predictors in the preliminary model", out.height="30%"}
+par(mfrow=c(2,3))
+plot(x=cleaned$Gender, y=y_value, main="Residuals vs. Gender", xlab="Gender", ylab="Residuals")
+plot(x=cleaned$Age, y=y_value, main="Residuals vs. Age", xlab = "Age", ylab="Residuals")
+plot(x=cleaned$BMI, y=y_value, main="Residuals vs. BMI", xlab = "BMI", ylab="Residuals")
+plot(x=cleaned$AlcoholYear, y=y_value, main="Residuals vs. AlcoholYear", xlab = "AlcoholYear", ylab="Residuals")
+plot(x=cleaned$PhysActiveDays, y=y_value, main="Residuals vs. PhysActiveDays", xlab = "PhysActiveDays", ylab="Residuals")
+
+plot(x=x_value, y=y_value, main="Residuals vs. Fitted Values", xlab="Fitted", ylab="Residuals")
+```
+
+```{r og qq, echo=FALSE, fig.show='hold', fig.align='center', fig.cap="Q-Q plot for the preliminary model", out.height="30%"}
+qqnorm(resid(og_model))
+qqline(resid(og_model))
+```
+
+## Model Transformations
+
+Despite violation on Condition 2, we proceeded to correct the
+aforementioned model assumption violations first. A Box-Cox
+transformation was applied to both the response and predictors.
+Specifically, the response variable, BPSysAve, was transformed using an
+inverse transformation, Age was transformed using a square root
+transformation; BMI was transformed using an inverse square root
+transformation; AlcoholYear was increased by one to avoid zero-entries,
+then log-transformed; PhysActiveDays was transformed using a square root
+transformation. The transformed model yieled
+$$\text{BPSysAve}^{-1} = \beta_0 + \beta_1 \text{Gender} + \beta_2 \sqrt{\text{Age}} + \beta_3 \sqrt{\text{BMI}}^{-1} + \beta_4 \log(\text{AlcoholYear}+1) + \beta_5 \sqrt{\text{PhysActiveDays}} + \epsilon$$
+
+The transformation significantly corrected the violation of linearity
+and normality. It also improved constant variance for BMI and Condition
+2 for AlcoholYear and BMI.
+
+```{r BMI residuals before vs. after, echo=FALSE, fig.show='hold', fig.align='center', fig.cap="Before (left) and after (right) Box-Cox transformation, normality and constant variance improved"}
+y_value_org <- residuals(og_model)
+y_value_trans <- residuals(trans_model_bc)
+
+par(mfrow=c(2,2))
+qqnorm(y_value_org)
+qqline(y_value_org)
+qqnorm(y_value_trans)
+qqline(y_value_trans)
+plot(x=cleaned$BMI, y=y_value_org, main="Residuals vs. BMI", xlab = "BMI", ylab="Residuals")
+plot(x=cleaned$transBMI, y=y_value_trans, main="Residuals vs. 1/sqrt(BMI)", xlab = "1/sqrt(BMI)", ylab="Residual")
+```
+
+<!-- ```{r QQ plot before vs. after, echo=FALSE, fig.show='hold', fig.cap="Q-Q plot before (left) and after (right) transformation", fig.align='center', fig.width=3, fig.height=3.5} -->
+
+<!-- mfrow=c(1,2) -->
+
+<!-- qqnorm(y_value_org) -->
+
+<!-- qqline(y_value_org) -->
+
+<!-- qqnorm(y_value_trans) -->
+
+<!-- qqline(y_value_trans) -->
+
+<!-- ``` -->
+
+<!-- ```{r transformed residuals vs. predictors, echo=FALSE, fig.cap="Residuals vs. predictors in the transformed model", out.height="30%", fig.show='hold', fig.align='center'} -->
+
+<!-- e1_hat <- resid(trans_model_bc) -->
+
+<!-- y1_hat <- fitted(trans_model_bc) -->
+
+<!-- par(mfrow=c(2,3)) -->
+
+<!-- plot(y1_hat, e1_hat, xlab="Fitted Values", ylab="Residuals") -->
+
+<!-- plot(e1_hat ~ cleaned$transAge, xlab="sqrt(Age)", ylab="Residuals") -->
+
+<!-- plot(e1_hat ~ cleaned$transBMI, xlab="1/sqrt(BMI)", ylab="Residuals") -->
+
+<!-- plot(e1_hat ~ cleaned$transAlcoholYear, xlab="log(AlcoholYear + 1)", ylab="Residuals") -->
+
+<!-- plot(e1_hat ~ cleaned$transPhysActiveDays, xlab="sqrt(PhysActiveDays)", ylab="Residuals") -->
+
+<!-- qqnorm(e1_hat); qqline(e1_hat) -->
+
+<!-- ``` -->
+
+<!-- The transformed model much better satisfied the linearity and normality -->
+
+<!-- assumption. The transformation also improved the model on meeting -->
+
+<!-- constant variance and Condition 2. However, the uncorrelated error -->
+
+<!-- assumption was violated as several clusters appeared on the Residuals -->
+
+<!-- vs. log(AlcoholYear + 1) plot; since log(AlcoholYear + 1) was a discrete -->
+
+<!-- predictor, the residual clusters were in the form of vertical strips. -->
+
+## Manual Model Selection
+
+We chose our significance level to be 0.05. The ANOVA overall
+significance test yielded a p-value of $2.2\times10^{-16}< 0.05$. This
+showed at least one predictor in the transformed model had a significant
+linear relationship with $BPSysAve^{-1}$. The p-values from the T-test
+showed that Gender , $\sqrt{\text{Age}}$, $\sqrt{\text{BMI}}^{-1}$, and
+$\log(\text{AlcoholYear}+1)$ were statistically significant predictors.
+In contrast, the p-value of $\sqrt{\text{PhysActiveDays}}$ ($0.635$)
+exceeded the significance threshold, indicating that
+$\sqrt{\text{PhysActiveDays}}$ was not a statistically significant
+predictor.
+
+We considered a simpler model that excludes
+$\sqrt{\text{PhysActiveDays}}$. A partial F-test was performed to
+evaluate whether the exclusion statistically compromises the explanatory
+power of the model. The F-value ($0.228$) exceeds $0.05$, confirming
+that $\sqrt{\text{PhysActiveDays}}$ does not statistically improve the
+model and can be excluded. 
+
+The model suggested by the significance tests included the predictors:
+Gender, $\sqrt{\text{Age}}$, $\sqrt{\text{BMI}}^{-1}$, and
+$\log(\text{AlcoholYear}+1)$, with $\text{BPSysAve}^{-1}$ as the
+response variable. Now all predictors in the final model were
+statistically significant with BPV.
+
+## Automated Model Selection
+
+We cross-validated our manually selected final model with automated
+selection methods. All Possible Subsets, Forward, Backward, and Stepwise
+automated selection were deployed. All four techniques offered the same
+final model as the manually selected model. Therefore we were confident
+that the model selected in the partial F-test was optimal.
+
+## Final Model
+
+The final model was fitted with Gender, $\sqrt{\text{Age}}$,
+$\sqrt{\text{BMI}}^{-1}$, and $\log(\text{AlcoholYear}+1)$. It gave the
+following regression equation:
+$$\text{BPSysAve}^{-1} = 8.728\times10^{-3} -3.845\times10^{-4}\text{Gender}-2.905\times10^{-4} \sqrt{\text{Age}} + 1.019\times10^{-2} \sqrt{\text{BMI}}^{-1} -2.475\times10^{-5} \log(\text{AlcoholYear}+1) + \epsilon$$
+
+## Diagnostics of Final Model
+
+The final model reasonably satisfied all linear regression conditions
+and assumptions except showcasing correlated errors (see Figure 6-9 in
+Appendix). We left this as a limitation. The VIF values for all
+predictors in the final model were between 1.01-1.04, confirming no
+severe multicollinearity.
+
+There were no leverage points, no influential points affecting all
+fitted values, and no influential points affecting their own fitted
+values. However, there were 3 outliers and 23 points that influenced all
+coefficients. We had no evidence to remove them.
+
+# Conclusions and Limitations
+
+The final model reveals that Gender, Age, BMI, and alcohol drinking
+frequency, under transformation, have statistically significant combined
+effects on the inverse of BPSysAve, which directly relates to BPV. The
+coefficients quantify their respective influences. For instance, the
+coefficient of $\sqrt{\text{Age}}$ indicates that, holding other
+predictors constant, a one-unit increase in $\sqrt{\text{Age}}$ results
+in an expected change of $-2.906\times10^{-4}$ in the average of
+$\text{BPSysAve}^{-1}$. Overall, the model suggests that increases in
+$\sqrt{\text{Age}}$, $\sqrt{\text{BMI}}^{-1}$, and
+$\log(\text{AlcoholYear}+1)$ are associated with a decreased expected
+average of $\text{BPSysAve}^{-1}$. Additionally, males with the same
+values for other predictors tend to have a lower expected
+$\text{BPSysAve}^{-1}$.
+
+These findings mostly align with prior literature, reinforcing
+conclusions that male gender, older age, higher BMI, and greater alcohol
+consumption frequency are associated with increased BPV. Although
+PhysActiveDays-- a predictor supported by literature-- was removed
+during model selection, we suspected it was due to model assumption
+violations.
+
+The model's significance lies in its ability to capture not only
+physiological influences on BPV but also the impact of lifestyle
+choices. This highlights the idea that while physiological factors may
+be harder to alter, lifestyle changes can meaningfully impact BPV with
+effort and determination.
+
+However, the model has notable limitations. Its adjusted R-squared value
+of $0.1826$ indicates that less than $20\%$ of the variation in
+$\text{BPSysAve}^{-1}$ is explained, limiting its ability to capture
+fluctuations in BPV. This weak explanatory power constrains insights
+into the drivers of $\text{BPSysAve}^{-1}$ thereby BPV. Hence the
+information suggested by the final model might not be accurate.
+
+Moreover, the model significantly violates the uncorrelated error
+assumption. The Residuals vs. $\log(\text{AlcoholYear}+1)$ plot shows
+strong clustering in vertical lines. Despite the discreteness of
+$\log(\text{AlcoholYear}+1)$, random scatter among integers from 0-365
+values is expected, not systematic accumulations on certain values. This
+violation indicates connections among data points in the population,
+contradicting the assumption of independent errors in linear regression.
+Consequently, predictor variance may be over- or underestimated, leading
+to unreliable standard error estimates in our final model.
+
+```{r, echo=FALSE, fig.cap="Residuals vs. log(AlcoholYear + 1) in the final model", output.height="30%"}
+e1_hat <- resid(final)
+plot(e1_hat ~ cleaned$transAlcoholYear, xlab="log(AlcoholYear + 1)", ylab="Residuals", main="Residuals vs. log(AlcoholYear + 1)")
+```
+
+# Ethics Discussion
+
+We employed manual selection methods to determine our final model,
+subsequently validating it using automated selection methods to ensure
+the choice was reasonable. Automated selection was not used as a
+starting point because our research question required a model that
+incorporated both physiological and lifestyle predictors. Since
+lifestyle predictors appeared less significant prior to model selection,
+we were concerned that an automated process might exclude them entirely.
+However, our manual selection approach—using T-tests and partial
+F-tests—produced the same outcome as all four automated methods we
+tested (all-possible-subsets, forward, backward, and stepwise
+selection), and all included the lifestyle factor
+$\log(\text{AlcoholYear+1})$.
+
+Ethically, we believe that in our specific context manual and automated
+methods are comparable. A small model with only five predictors like
+ours allows for detailed supervision, interpretation, and assessment at
+each step of the automated process, ensuring transparency and
+accountability. The primary ethical concern with automated selection
+lies in the potential for unintended negligence. Limited knowledge or
+control over the selection process can result in biased or unjust models
+being selected and deployed, potentially causing harm. However, the
+close oversight we maintained transformed the automated methods from a
+potential "black box" into a transparent process, so negligence, whether
+intended or not, was avoided.
+
+While automated selection carries risks of biased outcomes, our careful
+monitoring mitigated these risks, making it as reliable and effective as
+manual selection in this instance. That said, the ethical implications
+of manual versus automated selection methods may be very different in
+other contexts.
+
+# Bibliography
+
+Martinez-Ríos, E., Montesinos, L., Alfaro-Ponce, M., & Pecchia, L.
+(2021). A review of machine learning in hypertension detection and blood
+pressure estimation based on clinical and physiological data.
+*Biomedical Signal Processing and Control, 68*, 102813.
+<https://doi.org/10.1016/j.bspc.2021.102813>
+
+Jensen, G. B., Grønbæk, M., Jensen, M. T., Schnohr, P., Nordestgaard, B.
+G., Lavie, C. J., O’Keefe, J. H., & Marott, J. L. (2024). Type of
+alcohol and blood pressure: The Copenhagen General Population Study.
+*The American Journal of Medicine, 137*(9), 857-864.
+<https://doi.org/10.1016/j.amjmed.2024.05.001>
+
+Fagard, R. H., & Cornelissen, V. A. (2007). Effect of exercise on blood
+pressure control in hypertensive patients. *European Journal of
+Cardiovascular Prevention and Rehabilitation, 14*(1), 12-17.
+<https://doi.org/10.1097/HJR.0b013e3280128bbb>
+
+Centers for Disease Control and Prevention. (2021, August 12). About the
+National Health and Nutrition Examination Survey. National Center for
+Health Statistics.
+<https://www.cdc.gov/nchs/nhanes/about_nhanes.htm#data>
+
+McDowell, M. A., Fryar, C. D., Hirsch, R., & Ogden, C. L. (2005).
+*Anthropometric reference data for children and adults: United States,
+2003–2006* (National Center for Health Statistics, Vital and Health
+Statistics, Series 11, No. 249). Centers for Disease Control and
+Prevention. <https://www.cdc.gov/nchs/data/series/sr_01/sr01_056.pdf>
+
+Centers for Disease Control and Prevention. (2022, February 16).
+*National Health and Nutrition Examination Survey (NHANES):
+Methodology*. National Center for Health Statistics.
+<https://www.cdc.gov/nchs/hus/sources-definitions/nhanes.htm>
+
+\newpage
+
+# Appendix
+
+```{r final model, echo=FALSE}
+wo_interaction_model <- lm(invBPSysAve ~ Gender + transAge + transBMI + transAlcoholYear, data = cleaned)
+e1_hat <- resid(wo_interaction_model)
+y1_hat <- fitted(wo_interaction_model)
+```
+
+```{r final response vs. fitted, fig.show='hold', fig.align='center', echo=FALSE, fig.cap="Condition 1 and 2 for the final model", out.height="20%"}
+
+plot(x=y1_hat, y=cleaned$invBPSysAve, xlab="Fitted", ylab="Response", main="Inverse of Systolic Blood Pressure vs. Fitted")
+
+pairs(cleaned[,c(2,7:10)])
+```
+
+```{r final residuals vs. predictors, echo=FALSE, fig.cap="Residuals vs. predictors in the final model", out.height="30%", fig.show='hold', fig.align='center'}
+par(mfrow=c(2,3))
+plot(y1_hat, e1_hat, xlab="Fitted Values", ylab="Residuals")
+plot(e1_hat~cleaned$Gender, xlab="Gender", ylab="Residual")
+plot(e1_hat ~ cleaned$transAge, xlab="sqrt(Age)", ylab="Residuals")
+plot(e1_hat ~ cleaned$transBMI, xlab="1/sqrt(BMI)", ylab="Residuals")
+plot(e1_hat ~ cleaned$transAlcoholYear, xlab="log(AlcoholYear + 1)", ylab="Residuals")
+```
+
+```{r final qq, echo=FALSE, fig.cap="Q-Q plot for the final model", fig.show='hold', fig.align='center'}
+qqnorm(e1_hat); qqline(e1_hat)
+```
