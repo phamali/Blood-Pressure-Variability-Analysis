@@ -1,0 +1,322 @@
+---
+title: "Final model:"
+author: "Alisha Pham, Katrina Sha, Dabin Choi"
+output: pdf_document
+---
+# Data Preparation and Cleaning
+```{r setup, include=FALSE}
+#install.packages("NHANES")
+#install.packages("car")
+#install.packages("leaps")
+library(leaps)
+library(MASS)
+library(NHANES)
+library(car)
+data(NHANES)
+raw <- as.data.frame(NHANES)
+cleaned <- subset(raw, select = c(BPSysAve,Gender,Age,BMI,AlcoholYear,PhysActiveDays))
+cleaned <- cleaned[complete.cases(cleaned),]
+```
+
+# Model Fitting
+```{r preliminary model, include=FALSE}
+og_model <- lm(BPSysAve ~ Gender + Age + BMI + AlcoholYear + PhysActiveDays, data=cleaned)
+```
+# Multicollinearity: VIF
+```{r}
+# No severe multicollinearity
+vif(og_model)
+```
+# Check Conditions
+```{r}
+y_value <- resid(og_model)
+x_value <- fitted(og_model)
+
+#Condition 1
+plot(x=x_value, y=cleaned$BPSysAve, xlab="Fitted", ylab="Response", main="Systolic Blood Pressure vs. Fitted")
+
+#Condition 2
+pairs(cleaned[,2:6])
+```
+
+# Check Assumptions
+```{r}
+par(mfrow=c(2,3))
+plot(x=cleaned$Gender, y=y_value, main="Residual vs. Gender", xlab="Gender", ylab="Residual")
+plot(x=cleaned$Age, y=y_value, main="Residual vs. Age", xlab = "Age", ylab="Residual")
+plot(x=cleaned$BMI, y=y_value, main="Residual vs. BMI", xlab = "BMI", ylab="Residual")
+plot(x=cleaned$AlcoholYear, y=y_value, main="Residual vs. AlcoholYear", xlab = "AlcoholYear", ylab="Residual")
+plot(x=cleaned$PhysActiveDays, y=y_value, main="Residual vs. PhysActiveDays", xlab = "PhysActiveDays", ylab="Residual")
+
+plot(x=x_value, y=y_value, main="Residual vs. Fitted Values", xlab="Fitted", ylab="Residuals")
+
+qqnorm(resid(og_model))
+qqline(resid(og_model))
+```
+
+# Step 1: Transformation
+## Linearity and Normality: Box-Cox Transformation
+```{r box-cox}
+library(car)
+# try box-cox on response
+boxCox(og_model) # p close to -1, so do an inverse transformation on Y
+cleaned$invBPSysAve <- 1/cleaned$BPSysAve
+
+# try box-cox on predictors
+shifted_data <- cbind(cleaned[,3:4], cleaned$AlcoholYear + 1, cleaned$PhysActiveDays) # shift AlcoholYear to positive for box-cox transformation: all entries must be positive
+p <- powerTransform(shifted_data) # omitted Gender because it's categorical
+# summary(p)
+
+# transform predictors by the following power transformations:
+# Age: p = 0.4253758 
+cleaned$transAge <- sqrt(cleaned$Age)
+# BMI: p = -0.5791088
+cleaned$transBMI <- 1/sqrt(cleaned$BMI)
+# AlcoholYear: p = 0.1194823
+cleaned$transAlcoholYear <- log(cleaned$AlcoholYear + 1)
+# PhysActiveDays: p = 0.4983646 
+cleaned$transPhysActiveDays <- sqrt(cleaned$PhysActiveDays)
+# Gender: NONE
+
+# refit model
+trans_model_bc <- lm(invBPSysAve ~ Gender + transAge + transBMI + transAlcoholYear + transPhysActiveDays, data=cleaned)
+e_hat <- resid(trans_model_bc)
+y_hat <- fitted(trans_model_bc)
+
+#summary(trans_model_bc)
+```
+## Multicollinearity: VIF
+```{r}
+vif(trans_model_bc)
+```
+## Condition 1 & Assumptions 
+```{r}
+# display result
+plot(x=y_hat, y=cleaned$invBPSysAve, xlab="Fitted", ylab="Response", main="Inverse of Systolic Blood Pressure vs. Fitted")
+par(mfrow=c(2,3))
+plot(y_hat, e_hat, xlab="Fitted Values", ylab="Residuals")
+plot(e_hat ~ cleaned$transAge, xlab="sqrt(Age)", ylab="Residuals")
+plot(e_hat ~ cleaned$transBMI, xlab="1/sqrt(BMI)", ylab="Residuals")
+plot(e_hat ~ cleaned$transAlcoholYear, xlab="log(AlcoholYear + 1)", ylab="Residuals")
+plot(e_hat ~ cleaned$transPhysActiveDays, xlab="sqrt(PhysActiveDays)", ylab="Residuals")
+qqnorm(e_hat); qqline(e_hat)
+```
+## Condition 2 Revisited
+Notice the strong parabolic relationship between BMI and AlcoholYear are corrected.
+```{r condition 2}
+pairs(cbind(cleaned[,2], cleaned[,8:11]))
+```
+
+## Result for Step 1
+```{r first step transformed model}
+trans_model_1 <- trans_model_bc
+```
+<!-- # Leverage Points -->
+<!-- ```{r} -->
+<!-- p = 5 -->
+<!-- n = 2913 -->
+
+<!-- hii <- hatvalues(trans_model_1) -->
+<!-- cutoff_hii <- 2*(6/2913) -->
+<!-- which(hii>cutoff_hii) -->
+<!-- ``` -->
+<!-- # Outlier Points -->
+<!-- ```{r} -->
+<!-- ri <- rstandard(trans_model_1) -->
+<!-- which(ri > -4 | 4 < ri) -->
+<!-- ``` -->
+<!-- # Influential on all fitted values -->
+<!-- ```{r} -->
+<!-- di <- cooks.distance(trans_model_1) -->
+<!-- cutoff_di <- qf(0.5, 6, 2907) -->
+<!-- which(di > cutoff_di) -->
+<!-- ``` -->
+<!-- # Influential on own fitted values -->
+<!-- ```{r} -->
+<!-- dffits <- dffits(trans_model_1) -->
+<!-- cutoff_dffits <- 2*sqrt(6/2913) -->
+<!-- which(abs(dffits) > cutoff_dffits) -->
+<!-- ``` -->
+<!-- # Influential on all coefficients -->
+<!-- ```{r} -->
+<!-- dfbetas <- dfbetas(trans_model_1) -->
+<!-- cutoff_dbetas <- 2/sqrt(2913) -->
+<!-- which(abs(dfbetas[,1])>cutoff_dbetas) -->
+<!-- which(abs(dfbetas[,2])>cutoff_dbetas) -->
+<!-- ``` -->
+
+# Step 2: Significance tests
+## ANOVA Overall Significance Test
+```{r}
+# display the full model summary of trans_model_1
+summary(trans_model_1)
+
+# significance level
+alpha <- 0.05 
+
+# p-value for the ANOVA test
+pvalue_anova <- 2.2e-16
+```
+
+## T-test
+```{r}
+model_summary1 <- summary(trans_model_1)
+
+# extract p-values for each predictor's t-test
+t_test_p_values1 <- model_summary1$coefficients[, 4]
+
+# display the p-values for each predictor
+cat("P-values for individual predictors:\n")
+print(t_test_p_values1)
+
+
+# identify which predictors have p-values greater than alpha
+insignificant_predictors1 <- names(t_test_p_values1)[t_test_p_values1 > alpha]
+```
+
+<!-- ```{r model with the interaction term Gender*transAge} -->
+<!-- # fit the linear model with the interaction term: Gender*transAge -->
+<!-- trans_model_2 <- lm(invBPSysAve ~ Gender + transAge + transBMI + transAlcoholYear +  -->
+<!--     transPhysActiveDays + Gender*transAge, data = cleaned) -->
+
+<!-- model_summary2 <- summary(trans_model_2) -->
+
+<!-- # extract p-values for each predictor's t-test -->
+<!-- t_test_p_values2 <- model_summary2$coefficients[, 4] -->
+
+<!-- # display the p-values for each predictor -->
+<!-- cat("P-values for individual predictors:\n") -->
+<!-- print(t_test_p_values2) -->
+
+
+<!-- # identify which predictors have p-values greater than alpha -->
+<!-- insignificant_predictors <- names(t_test_p_values2)[t_test_p_values2 > alpha] -->
+<!-- ``` -->
+
+## Partial F Test
+```{r}
+# fit model that removes transPhysActiveDays
+reduced_model1 <- lm(invBPSysAve ~ Gender + transAge + transBMI + transAlcoholYear, data = cleaned)
+
+# conduct partial F test
+anova(reduced_model1, trans_model_1)
+
+# F statistic
+F_value <- 0.2258
+```
+
+# Step 3: Model Selection
+## All Possible Subsets
+```{r}
+best1 <- regsubsets(invBPSysAve ~ Gender + transAge + transBMI + transAlcoholYear + transPhysActiveDays, data = cleaned, nvmax = 5)
+summary(best1)
+subsets(best1, statistic="adjr2", legend=FALSE)
+```
+## Automated Selection: Forward
+```{r}
+stepAIC(lm(invBPSysAve ~ 1, data = cleaned),
+  scope = list(upper = lm(invBPSysAve ~ Gender + transAge + transBMI + transAlcoholYear + transPhysActiveDays, data = cleaned)), 
+  direction = "forward", k = 2)
+```
+## Automated Selection: Backward
+```{r}
+stepAIC(lm(invBPSysAve ~ Gender + transAge + transBMI + transAlcoholYear + transPhysActiveDays, data = cleaned),
+  scope = list(lower = lm(invBPSysAve ~ 1, data = cleaned)), 
+  direction = "backward", k=2)
+```
+## Automated Selection: Step Wise
+```{r}
+stepAIC(lm(invBPSysAve ~ Gender + transAge + transBMI + transAlcoholYear + transPhysActiveDays, data = cleaned),
+  direction = "both", k=2)
+```
+# Step 4: Final Model (without interaction)
+## Check Assumptions of Final Model
+```{r}
+wo_interaction_model <- lm(invBPSysAve ~ Gender + transAge + transBMI + transAlcoholYear, data = cleaned)
+e1_hat <- resid(wo_interaction_model)
+y1_hat <- fitted(wo_interaction_model)
+
+
+plot(x=y1_hat, y=cleaned$invBPSysAve, xlab="Fitted", ylab="Response", main="Inverse of Systolic Blood Pressure vs. Fitted")
+par(mfrow=c(2,3))
+plot(y1_hat, e1_hat, xlab="Fitted Values", ylab="Residuals")
+plot(e1_hat ~ cleaned$transAge, xlab="sqrt(Age)", ylab="Residuals")
+plot(e1_hat ~ cleaned$transBMI, xlab="1/sqrt(BMI)", ylab="Residuals")
+plot(e1_hat ~ cleaned$transAlcoholYear, xlab="log(AlcoholYear + 1)", ylab="Residuals")
+qqnorm(e1_hat); qqline(e1_hat)
+```
+
+## Problematic observations
+### Leverage points
+```{r}
+p <- 4
+n <- 2913
+
+hii <- hatvalues(wo_interaction_model)
+cutoff_hii <- 2*(p+1/n)
+leverages <- which(hii>cutoff_hii)
+paste0("Number of leverages: ", length(leverages))
+```
+
+### Outliers
+```{r}
+ri <- rstandard(wo_interaction_model)
+outliers <- which(ri < -4 | 4 < ri)
+paste0("Number of outliers: ", length(outliers))
+```
+### Influential on all fitted values
+```{r}
+di <- cooks.distance(wo_interaction_model)
+cutoff_di <- qf(0.5, p+1, n-p-1)
+influential_all_fitted <- which(di > cutoff_di)
+paste0("Number of influential points on all fitted values: ", length(influential_all_fitted))
+```
+### Influential on own fitted values
+```{r}
+dffits <- dffits(wo_interaction_model)
+cutoff_dffits <- 2*sqrt(p+1/n)
+influential_own_fitted <- which(abs(dffits) > cutoff_dffits)
+paste0("Number of influential points on own fitted values: ", length(influential_own_fitted))
+```
+### Influential on all coefficients
+```{r}
+dfbetas <- dfbetas(wo_interaction_model)
+cutoff_dbetas <- 2/sqrt(n)
+# which observations are influential by dfbetas?
+influentials_beta0 <- which(abs(dfbetas[,1]) > cutoff_dbetas)
+influentials_beta1 <- which(abs(dfbetas[,2]) > cutoff_dbetas)
+influentials_beta2 <- which(abs(dfbetas[,3]) > cutoff_dbetas)
+influentials_beta3 <- which(abs(dfbetas[,4]) > cutoff_dbetas)
+influentials_beta4 <- which(abs(dfbetas[,5]) > cutoff_dbetas)
+paste0("Number of influential points on beta0: ", length(influentials_beta0))
+paste0("Number of influential points on beta1: ", length(influentials_beta1))
+paste0("Number of influential points on beta2: ", length(influentials_beta2))
+paste0("Number of influential points on beta3: ", length(influentials_beta3))
+paste0("Number of influential points on beta4: ", length(influentials_beta4))
+```
+Influential points on all fitted values, its own fitted values, and coefficients:
+```{r}
+all_influential <- Reduce(intersect, list(influential_all_fitted,influential_own_fitted,  influentials_beta0, influentials_beta1, influentials_beta2, influentials_beta3, influentials_beta4))
+paste0("The number of points that are influential in all 3 ways discussed: ", length(all_influential))
+```
+### Problematic observation: summary
+```{r}
+outliers
+leverages
+influential_all_fitted
+influential_own_fitted
+Reduce(intersect, list(influentials_beta0, influentials_beta1, 
+                       influentials_beta2, influentials_beta3,
+                       influentials_beta4)) # influential on all coefficients
+```
+Notice observation #2340 and #2371 are both outliers and influential on all predictor coeffcients. Let's see their values.
+
+```{r}
+cleaned[2340,]
+cleaned[2371,] # BPSysAve looks clearly wrong, but we don't have the context to remove
+```
+
+## Multicolinearity
+```{r}
+vif(wo_interaction_model)
+```
