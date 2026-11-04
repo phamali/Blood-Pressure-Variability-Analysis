@@ -1,10 +1,5 @@
 # Determinants of Blood Pressure Variability: A Multilinear Regression Approach
 
-[![Language: R](https://img.shields.io/badge/Language-R-276DC3.svg?style=flat-square)](https://www.r-project.org/)
-[![Dataset: NHANES](https://img.shields.io/badge/Dataset-NHANES%20(n%3D2,925)-0052CC.svg?style=flat-square)](https://www.cdc.gov/nchs/nhanes/about_nhanes.htm)
-[![Report: PDF](https://img.shields.io/badge/Report-PDF-EC1C24.svg?style=flat-square)](./BP%20Variability%20Report.pdf)
-[![Poster: PNG](https://img.shields.io/badge/Poster-PNG-8A2BE2.svg?style=flat-square)](./BP%20Variability%20Poster.png)
-
 ## Overview
 This study investigates how physiological traits and lifestyle habits collectively influence **systolic blood pressure variability (BPV)**. Using clinical and survey records from the **National Health and Nutrition Examination Survey (NHANES)** ($N = 10,000$ raw; $n = 2,925$ cleaned complete cases), we develop, transform, and validate a multilinear regression model to quantify key determinants of average systolic blood pressure (`BPSysAve`).
 
