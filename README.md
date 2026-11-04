@@ -15,7 +15,7 @@ This study investigates how physiological traits and lifestyle habits collective
 | **`Gender`** | Predictor | Biological sex (`male` / `female`) | None (Binary indicator) |
 | **`Age`** | Predictor | Age in years | Square root ($\sqrt{\text{Age}}$) |
 | **`BMI`** | Predictor | Body Mass Index ($\text{kg/m}^2$) | Inverse square root ($1/\sqrt{\text{BMI}}$) |
-| **`AlcoholYear`** | Predictor | Annual drinking frequency (0–365 days/yr) | Shifted log ($\operatorname{log}(\mathrm{AlcoholYear} + 1)$) |
+| **`AlcoholYear`** | Predictor | Annual drinking frequency (0–365 days/yr) | Shifted log $(\log(\text{AlcoholYear} + 1))$ |
 | **`PhysActiveDays`** | Predictor | Weekly physical activity (0–7 days/wk) | Square root ($\sqrt{\text{PhysActiveDays}}$) *(Excluded)* |
 
 ---
