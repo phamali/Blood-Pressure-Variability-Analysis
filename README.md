@@ -47,7 +47,7 @@ $$\widehat{\text{BPSysAve}^{-1}} = 8.728 \times 10^{-3} - 3.845 \times 10^{-4}\t
 
 ---
 
-## Research Poster
+## Poster
 
 [![Determinants of Blood Pressure Variability Research Poster](./BP%20Variability%20Poster.png)](./BP%20Variability%20Poster.png)
 
