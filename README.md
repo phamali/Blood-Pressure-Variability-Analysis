@@ -7,6 +7,12 @@ This study investigates how physiological traits and lifestyle habits collective
 
 ---
 
+## Research Poster
+
+[![Determinants of Blood Pressure Variability Research Poster](./BP%20Variability%20Poster.png)](./BP%20Variability%20Poster.png)
+
+---
+
 ## Study Variables
 
 | Variable | Role | Description | Transformation Applied |
@@ -48,10 +54,6 @@ $$\widehat{\text{BPSysAve}^{-1}} = 8.728 \times 10^{-3} - 3.845 \times 10^{-4}\t
 * **Model Fit & Limitations:** The final model achieves an Adjusted $R^2$ of **0.1826**, indicating that while demographic and lifestyle variables have a statistically significant impact, roughly 81.7% of systolic blood pressure variability is driven by unmeasured genetic, clinical, or environmental factors. Discrete banding in `AlcoholYear` residuals also reflects correlated errors inherent to self-reported survey data.
 
 ---
-
-## Research Poster
-
-[![Determinants of Blood Pressure Variability Research Poster](./BP%20Variability%20Poster.png)](./BP%20Variability%20Poster.png)
 
 ## Authors
 **Alisha Pham**, **Katrina Sha**, **Dabin Choi**
