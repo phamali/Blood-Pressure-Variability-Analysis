@@ -49,15 +49,9 @@ $$\widehat{\text{BPSysAve}^{-1}} = 8.728 \times 10^{-3} - 3.845 \times 10^{-4}\t
 
 ---
 
-## Repository Structure
+## Research Poster
 
-```text
-Blood-Pressure-Variability-Analysis/
-├── BP Variability Report.pdf       # Full technical manuscript and diagnostic appendix
-├── BP Variability Poster.png       # Research poster summarizing pipeline and results
-├── BP Variability Code.Rmd     # R Markdown source code for data cleaning and modeling
-└── README.md                       # Project documentation
-```
+[![Determinants of Blood Pressure Variability Research Poster](./BP%20Variability%20Poster.png)](./BP%20Variability%20Poster.png)
 
 ## Authors
 **Alisha Pham**, **Katrina Sha**, **Dabin Choi**
