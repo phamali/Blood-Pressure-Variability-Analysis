@@ -7,12 +7,6 @@ This study investigates how physiological traits and lifestyle habits collective
 
 ---
 
-## Research Poster
-
-[![Determinants of Blood Pressure Variability Research Poster](./BP%20Variability%20Poster.png)](./BP%20Variability%20Poster.png)
-
----
-
 ## Study Variables
 
 | Variable | Role | Description | Transformation Applied |
@@ -52,6 +46,12 @@ $$\widehat{\text{BPSysAve}^{-1}} = 8.728 \times 10^{-3} - 3.845 \times 10^{-4}\t
 ### Key Takeaways
 * **Clinical Findings:** Because the response is inverse-transformed ($\text{BPSysAve}^{-1}$), a negative coefficient corresponds to **higher systolic blood pressure**. Holding other factors constant, male sex, older age, higher BMI, and more frequent alcohol consumption are all significantly associated with elevated systolic BP.
 * **Model Fit & Limitations:** The final model achieves an Adjusted $R^2$ of **0.1826**, indicating that while demographic and lifestyle variables have a statistically significant impact, roughly 81.7% of systolic blood pressure variability is driven by unmeasured genetic, clinical, or environmental factors. Discrete banding in `AlcoholYear` residuals also reflects correlated errors inherent to self-reported survey data.
+
+---
+
+## Research Poster
+
+[![Determinants of Blood Pressure Variability Research Poster](./BP%20Variability%20Poster.png)](./BP%20Variability%20Poster.png)
 
 ---
 
